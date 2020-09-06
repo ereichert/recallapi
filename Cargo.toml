@@ -1,5 +1,5 @@
 [package]
-name = "recall-api"
+name = "recall_api"
 version = "0.1.0"
 authors = ["Eric Reichert <eric@reichertconsulting.com>"]
 edition = "2018"
