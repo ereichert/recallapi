@@ -1,7 +1,6 @@
-extern crate recall_api;
-
 use std::io::{self, Read};
-use recall_api::models::Memory;
+use recall_api::models::NewMemory;
+use recall_api::memory_service;
 
 fn main() {
     println!("What is your Memory Prompt?\n");
@@ -16,8 +15,8 @@ fn main() {
     let _ = handle.read_to_string(&mut mem_details_buffer).unwrap();
     let mem_details = mem_details_buffer.trim();
 
-    let memory = Memory::new(mem_prompt, mem_details);
+    let memory = NewMemory::new(mem_prompt, mem_details);
 
-    println!("Prompt:\n{}", memory.prompt);
-    println!("Details:\n{}", memory.details);
+    println!("Writing {:#?}", memory);
+    memory_service::write_memory(&memory);
 }
