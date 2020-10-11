@@ -1,1 +1,3 @@
 /target
+/test-data/bad_permissions_file.json
+/test-data/bad_json_file.json
