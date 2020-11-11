@@ -1,28 +1,25 @@
-use recall_api::models::RecallMemory;
-use recall_api::{memory_service, models::OwnedRecallMemory};
+use recall_api::{memento_db_service, models::NewMemento};
 use std::fmt;
 use std::io::BufReader;
 use std::io::{self, Read};
 use std::{error, fs::File};
 
 fn main() {
-    const TEST_MEMORY_JSON_FILE: &'static str = "./test-data/mem_file.json";
-    let result = read_memento_from_file(TEST_MEMORY_JSON_FILE)
-        .map(|memento| {
-            let memento = RecallMemory::new(&memento.prompt, &memento.details);
-            println!("DEBUG: Sending Memento to MementoService {:#?}", memento);
-            memory_service::write_memory(&memento)
-        });
+    const TEST_MEMENTO_JSON_FILE: &'static str = "./test-data/mem_file.json";
+    let write_result = read_memento_from_file(TEST_MEMENTO_JSON_FILE).map(|memento| {
+        println!("DEBUG: Sending Memento to MementoService {:#?}", memento);
+        memento_db_service::write_memento(&memento)
+    });
 
-    match result {
+    match write_result {
         Ok(memento) => {
             println!("Successfuly saved new Memento.");
             println!();
             println!("Prompt: \n\n{}", memento.prompt);
             println!();
             println!("Details: \n\n{}", memento.details);
-        },
-        Err(err) => print!("Failed to write Memento because of error: {:#?}", err)
+        }
+        Err(err) => print!("Failed to write Memento because of error: {:#?}", err),
     }
 }
 
@@ -56,17 +53,17 @@ impl From<io::Error> for MementoReadErrors {
     }
 }
 
-fn read_memento_from_file(file_location: &str) -> Result<OwnedRecallMemory, MementoReadErrors> {
+fn read_memento_from_file(file_location: &str) -> Result<NewMemento, MementoReadErrors> {
     match File::open(file_location) {
         Ok(file) => {
             let reader = BufReader::new(file);
-            read_recall_memory_from_json(reader)
+            read_memento_from_json(reader)
         }
         Err(err) => Err(MementoReadErrors::IO(err)),
     }
 }
 
-fn read_recall_memory_from_json<R: Read>(reader: BufReader<R>) -> Result<OwnedRecallMemory, MementoReadErrors> {
+fn read_memento_from_json<R: Read>(reader: BufReader<R>) -> Result<NewMemento, MementoReadErrors> {
     serde_json::from_reader(reader).map_err(MementoReadErrors::Deserilization)
 }
 
@@ -76,22 +73,25 @@ mod rc_write_mem_tests {
 
     use crate::read_memento_from_file;
     use crate::MementoReadErrors;
-    use recall_api::models::RecallMemory;
+    use recall_api::models::NewMemento;
 
-    const TEST_MEMORY_JSON_FILE: &'static str = "./test-data/mem_file.json";
+    const TEST_MEMENTO_JSON_FILE: &'static str = "./test-data/mem_file.json";
 
     #[test]
-    fn read_memory_from_file_should_be_able_to_read_json_formatted_memory_from_file() {
-        let expected_new_memory = RecallMemory::new("This is a prompt from a file.", "This is a memory from a file.");
+    fn read_memento_from_file_should_be_able_to_read_json_formatted_memento_from_file() {
+        let expected_new_memento = NewMemento {
+            prompt: "This is a prompt from a file.".to_owned(),
+            details: "This is a Memento from a file.".to_owned(),
+        };
 
-        let memory = read_memento_from_file(TEST_MEMORY_JSON_FILE).unwrap();
+        let memento = read_memento_from_file(TEST_MEMENTO_JSON_FILE).unwrap();
 
-        assert_eq!(expected_new_memory.prompt, memory.prompt);
-        assert_eq!(expected_new_memory.details, memory.details)
+        assert_eq!(expected_new_memento.prompt, memento.prompt);
+        assert_eq!(expected_new_memento.details, memento.details)
     }
 
     #[test]
-    fn read_memory_from_file_should_return_a_file_error_when_the_file_cannot_be_found() {
+    fn read_memento_from_file_should_return_a_file_error_when_the_file_cannot_be_found() {
         let bad_file_location = "./bad_file_name.json".to_owned();
         let actual_err = read_memento_from_file(&bad_file_location).unwrap_err();
 
@@ -102,7 +102,7 @@ mod rc_write_mem_tests {
     }
 
     #[test]
-    fn read_memory_from_file_should_return_a_file_permissions_error_when_the_file_cannot_be_read() {
+    fn read_memento_from_file_should_return_a_file_permissions_error_when_the_file_cannot_be_read() {
         use std::process::Command;
         let bad_file_location = "./test-data/bad_permissions_file.json".to_owned();
         let _ = std::fs::remove_file(&bad_file_location);
@@ -123,7 +123,7 @@ mod rc_write_mem_tests {
     }
 
     #[test]
-    fn read_memory_from_file_should_return_a_deserialization_error_when_the_json_cannot_be_parsed() {
+    fn read_memento_from_file_should_return_a_deserialization_error_when_the_json_cannot_be_parsed() {
         let bad_file_location = "./test-data/bad_json_file.json".to_owned();
         let _ = std::fs::remove_file(&bad_file_location);
         let _ = File::create(&bad_file_location);

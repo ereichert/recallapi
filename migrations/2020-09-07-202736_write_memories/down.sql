@@ -1,1 +1,1 @@
-DROP TABLE memories;
+DROP TABLE mementos;

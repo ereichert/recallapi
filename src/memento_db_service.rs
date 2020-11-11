@@ -4,14 +4,14 @@ use diesel::PgConnection;
 use dotenv::dotenv;
 use std::env;
 
-pub fn write_memory(memory: &RecallMemory) -> Memory {
-    use super::schema::memories;
-    println!("DEBUG: Writing {:#?}", memory);
+pub fn write_memento(memento: &NewMemento) -> Memento {
+    use super::schema::mementos;
+    println!("DEBUG: Writing {:#?}", memento);
     let conn = get_db_connection();
-    diesel::insert_into(memories::table)
-        .values(memory)
-        .get_result::<Memory>(&conn)
-        .expect("Error inserting new Memory")
+    diesel::insert_into(mementos::table)
+        .values(memento)
+        .get_result::<Memento>(&conn)
+        .expect("Error inserting new Memento")
 }
 
 fn get_db_connection() -> PgConnection {
