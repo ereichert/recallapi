@@ -1,24 +1,30 @@
 use super::models::*;
-use diesel::prelude::*;
-use diesel::PgConnection;
-use dotenv::dotenv;
-use std::env;
+use diesel::{prelude::*, PgConnection};
+use rocket_contrib::database;
 
-pub fn write_memento(memento: &NewMemento) -> Memento {
-    use super::schema::mementos;
-    println!("DEBUG: Writing {:#?}", memento);
-    let conn = get_db_connection();
-    diesel::insert_into(mementos::table)
-        .values(memento)
-        .get_result::<Memento>(&conn)
-        .expect("Error inserting new Memento")
+pub trait RecallDb {
+    fn get_all_mementos(&self) -> Mementos;
 }
 
-fn get_db_connection() -> PgConnection {
-    dotenv().ok();
-    let db_url = env::var("DATABASE_URL").expect("You must specify a URL for the database.");
-    PgConnection::establish(&db_url).expect(&format!(
-        "There was a problem establishing a connection to the database at {}.",
-        db_url
-    ))
+#[database("recall_db")]
+pub struct RecallDbConn(PgConnection);
+
+impl RecallDb for RecallDbConn {
+    fn get_all_mementos(&self) -> Mementos {
+        get_all_mementos(self)
+    }
+}
+
+pub fn get_all_mementos(db_conn: &PgConnection) -> Mementos {
+    use super::schema::mementos::mementos::dsl::*;
+    Mementos::new(mementos.load::<Memento>(&*db_conn).expect("Error loading posts"))
+}
+
+pub fn write_memento(db_conn: &PgConnection, memento: &Memento) -> Memento {
+    use super::schema::mementos::mementos;
+    println!("DEBUG: Writing {:#?}", memento);
+    diesel::insert_into(mementos::table)
+        .values(memento)
+        .get_result::<Memento>(db_conn)
+        .expect("Error inserting new Memento")
 }

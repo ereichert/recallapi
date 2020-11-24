@@ -1,14 +1,17 @@
-use recall_api::{memento_db_service, models::NewMemento};
-use std::fmt;
+use diesel::{Connection, PgConnection};
+use dotenv::dotenv;
+use recallapi::{memento_db_service, models::Memento};
 use std::io::BufReader;
 use std::io::{self, Read};
+use std::{env, fmt};
 use std::{error, fs::File};
 
 fn main() {
     const TEST_MEMENTO_JSON_FILE: &'static str = "./test-data/mem_file.json";
     let write_result = read_memento_from_file(TEST_MEMENTO_JSON_FILE).map(|memento| {
         println!("DEBUG: Sending Memento to MementoService {:#?}", memento);
-        memento_db_service::write_memento(&memento)
+        let db_conn = get_db_connection();
+        memento_db_service::write_memento(&db_conn, &memento)
     });
 
     match write_result {
@@ -53,7 +56,7 @@ impl From<io::Error> for MementoReadErrors {
     }
 }
 
-fn read_memento_from_file(file_location: &str) -> Result<NewMemento, MementoReadErrors> {
+fn read_memento_from_file(file_location: &str) -> Result<Memento, MementoReadErrors> {
     match File::open(file_location) {
         Ok(file) => {
             let reader = BufReader::new(file);
@@ -63,26 +66,34 @@ fn read_memento_from_file(file_location: &str) -> Result<NewMemento, MementoRead
     }
 }
 
-fn read_memento_from_json<R: Read>(reader: BufReader<R>) -> Result<NewMemento, MementoReadErrors> {
+fn read_memento_from_json<R: Read>(reader: BufReader<R>) -> Result<Memento, MementoReadErrors> {
     serde_json::from_reader(reader).map_err(MementoReadErrors::Deserilization)
+}
+
+fn get_db_connection() -> PgConnection {
+    dotenv().ok();
+    let db_url = env::var("DATABASE_URL").expect("You must specify a URL for the database.");
+    PgConnection::establish(&db_url).expect(&format!(
+        "There was a problem establishing a connection to the database at {}.",
+        db_url
+    ))
 }
 
 #[cfg(test)]
 mod rc_write_mem_tests {
-    use std::fs::File;
-
     use crate::read_memento_from_file;
     use crate::MementoReadErrors;
-    use recall_api::models::NewMemento;
+    use recallapi::models::Memento;
+    use std::fs::File;
 
     const TEST_MEMENTO_JSON_FILE: &'static str = "./test-data/mem_file.json";
 
     #[test]
     fn read_memento_from_file_should_be_able_to_read_json_formatted_memento_from_file() {
-        let expected_new_memento = NewMemento {
-            prompt: "This is a prompt from a file.".to_owned(),
-            details: "This is a Memento from a file.".to_owned(),
-        };
+        let expected_new_memento = Memento::new(
+            "This is a prompt from a file.".to_owned(),
+            "This is a Memento from a file.".to_owned(),
+        );
 
         let memento = read_memento_from_file(TEST_MEMENTO_JSON_FILE).unwrap();
 

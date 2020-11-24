@@ -1,12 +1,21 @@
 [package]
-name = "recall_api"
+name = "recallapi"
 version = "0.1.0"
 authors = ["Eric Reichert <eric@reichertconsulting.com>"]
 edition = "2018"
 
 [dependencies]
-diesel = { version = "1.4.5", features = ["postgres"] }
+diesel = { version = "1.4.5", features = ["postgres", "uuid"] }
 dotenv = "0.15.0"
 serde = { version = "1.0.116", features = ["derive"] }
 serde_json = "1.0.58"
 rocket = "0.4.6"
+uuid = { version = "0.6", features = ["serde", "v4"] }
+
+[dependencies.rocket_contrib]
+version = "0.4.6"
+default-features = false
+features = ["diesel_postgres_pool", "json", "uuid"]
+
+[dev-dependencies]
+parking_lot = "0.11"
