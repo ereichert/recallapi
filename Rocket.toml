@@ -1,0 +1,2 @@
+[global.databases.recall_db]
+url = "postgres://postgres:postgres@localhost/recall"
