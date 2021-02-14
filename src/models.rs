@@ -31,4 +31,8 @@ impl Mementos {
     pub fn new(mementos: Vec<Memento>) -> Mementos {
         Mementos { mementos }
     }
+
+    pub fn len(&self) -> usize {
+        self.mementos.len()
+    }
 }
