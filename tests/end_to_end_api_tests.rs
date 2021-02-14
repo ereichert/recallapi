@@ -3,7 +3,7 @@ use diesel::{Connection, PgConnection};
 use dotenv::dotenv;
 use parking_lot::Mutex;
 use recallapi::api::build_rocket;
-use recallapi::memento_db_service;
+use recallapi::db_services;
 use recallapi::models::Memento;
 use rocket::{http::Status, local::Client};
 use std::env;
@@ -39,7 +39,7 @@ fn get_all_mementos_returns_the_correct_json_representation() {
         let test_mementos = vec![memento1, memento2, memento3];
 
         for memento in &test_mementos {
-            memento_db_service::write_memento(&db_conn, &memento);
+            db_services::write_memento(&db_conn, &memento);
         }
 
         let expected_json_str: String = r#"{

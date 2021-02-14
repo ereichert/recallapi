@@ -1,6 +1,6 @@
 use diesel::{Connection, PgConnection};
 use dotenv::dotenv;
-use recallapi::{memento_db_service, models::Memento};
+use recallapi::{db_services, models::Memento};
 use std::io::BufReader;
 use std::io::{self, Read};
 use std::{env, fmt};
@@ -11,7 +11,7 @@ fn main() {
     let write_result = read_memento_from_file(TEST_MEMENTO_JSON_FILE).map(|memento| {
         println!("DEBUG: Sending Memento to MementoService {:#?}", memento);
         let db_conn = get_db_connection();
-        memento_db_service::write_memento(&db_conn, &memento)
+        db_services::write_memento(&db_conn, &memento)
     });
 
     match write_result {

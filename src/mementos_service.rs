@@ -1,6 +1,6 @@
 use rocket_contrib::json::Json;
 
-use crate::{memento_db_service::RecallDb, models::Mementos};
+use crate::{db_services::RecallDb, models::Mementos};
 
 pub fn get_mementos_as_json(db: impl RecallDb) -> Json<Mementos> {
     Json(db.get_all_mementos())
@@ -9,7 +9,7 @@ pub fn get_mementos_as_json(db: impl RecallDb) -> Json<Mementos> {
 #[cfg(test)]
 mod tests {
     use crate::models::Memento;
-    use crate::{memento_db_service::RecallDb, models::Mementos};
+    use crate::{db_services::RecallDb, models::Mementos};
     use rocket::{handler::Outcome, local::Client};
     use uuid::Uuid;
 

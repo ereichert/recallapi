@@ -3,7 +3,7 @@
 extern crate diesel;
 
 pub mod api;
-pub mod memento_db_service;
+pub mod db_services;
 pub mod mementos_service;
 pub mod models;
 pub mod schema;
