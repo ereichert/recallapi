@@ -11,13 +11,9 @@ pub struct RecallDbConn(PgConnection);
 
 impl RecallDb for RecallDbConn {
     fn get_all_mementos(&self) -> Mementos {
-        get_all_mementos(self)
+        use super::schema::mementos::mementos::dsl::*;
+        Mementos::new(mementos.load::<Memento>(&self.0).expect("Error loading posts"))
     }
-}
-
-pub fn get_all_mementos(db_conn: &PgConnection) -> Mementos {
-    use super::schema::mementos::mementos::dsl::*;
-    Mementos::new(mementos.load::<Memento>(&*db_conn).expect("Error loading posts"))
 }
 
 pub fn write_memento(db_conn: &PgConnection, memento: &Memento) -> Memento {
